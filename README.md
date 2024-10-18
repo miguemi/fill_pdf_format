@@ -1,10 +1,9 @@
-# README: Generación de PDF Dinámico con Laravel y Pdftk
+# Generación de PDF Dinámico con Laravel y Pdftk
 
 ## Descripción del Proyecto
 Este proyecto utiliza **Laravel** y la librería **php-pdftk** para generar PDFs dinámicos rellenando formularios con datos provenientes de la base de datos. El objetivo es permitir la creación de reportes PDF con información personalizada utilizando una combinación de datos del servidor y formularios PDF predefinidos.
 
 ---
-![alt text](image.png)
 ## Pasos Realizados
 
 ### Instalación de Laravel y Configuración Básica
