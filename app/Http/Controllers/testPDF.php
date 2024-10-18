@@ -11,7 +11,7 @@ class testPDF extends Controller
 {
     public function generarPDF($id)
     {
-        // Buscar el reporte en la base de datos por ID
+        // Buscar el reporte por ID
         $reporte = Reporte::find($id);
 
         if (!$reporte) {
@@ -21,30 +21,34 @@ class testPDF extends Controller
         // Convertir los datos del reporte en un array
         $datos = $reporte->toArray();
 
-        // Ruta del PDF original y del PDF temporal
+        // Ruta del PDF original
         $rutaPdfOriginal = public_path('report/reporte.pdf');
-        $rutaPdfSalidaTemporal = public_path('report/reporte_debug.pdf');
 
         try {
             // Crear una instancia de Pdf y rellenar el formulario
             $pdf = new Pdf($rutaPdfOriginal);
             $pdf->fillForm($datos)->needAppearances();
 
-            // Guardar el PDF temporalmente para verificar si se genera correctamente
-            if (!$pdf->saveAs($rutaPdfSalidaTemporal)) {
+            // Ejecutar la generación del PDF
+            if (!$pdf->execute()) {
                 Log::error('Error al generar PDF: ' . $pdf->getError());
                 throw new \Exception($pdf->getError());
             }
 
-            // Leer el contenido del PDF desde el archivo temporal
-            $pdfContent = file_get_contents($rutaPdfSalidaTemporal);
+            // Leer el contenido desde el archivo temporal generado por pdftk
+            $tmpFile = (string) $pdf->getTmpFile();
+            $pdfContent = file_get_contents($tmpFile);
 
-            // Limpiar buffers antes de enviar la respuesta
+            if ($pdfContent === false) {
+                throw new \Exception('Error al leer el contenido del PDF desde memoria.');
+            }
+
+            // Limpiar buffers
             if (ob_get_length()) {
                 ob_end_clean();
             }
 
-            // Establecer las cabeceras HTTP adecuadas
+            // Enviar el PDF como respuesta al navegador
             return response($pdfContent)
                 ->header('Content-Type', 'application/pdf')
                 ->header('Content-Disposition', 'inline; filename="reporte_llenado.pdf"')
@@ -54,8 +58,6 @@ class testPDF extends Controller
         } catch (\Exception $e) {
             // Registrar cualquier error en los logs
             Log::error('Error al generar PDF: ' . $e->getMessage());
-
-            // Devolver un error JSON si ocurre algún problema
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
